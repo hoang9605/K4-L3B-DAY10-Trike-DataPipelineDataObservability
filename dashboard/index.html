@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trike · Data Observability</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111b;
+      --panel: #101e2a;
+      --panel-hi: #172a38;
+      --line: #294252;
+      --text: #e8f4f5;
+      --muted: #9ab1bb;
+      --green: #55d6a4;
+      --amber: #ffbf69;
+      --red: #ff7785;
+      --blue: #6ac5f3;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 85% 0%, #123448 0, transparent 34%), var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .shell { max-width: 1180px; margin: 0 auto; padding: 32px 22px 64px; }
+    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+    .eyebrow { color: var(--green); font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 5px 0 6px; font-size: clamp(29px, 5vw, 48px); line-height: 1.08; letter-spacing: -.04em; }
+    h2 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
+    p { margin: 0; }
+    .intro, .meta, .footnote { color: var(--muted); }
+    .live { white-space: nowrap; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--green); background: #0e261f; font-size: 13px; }
+    .live.offline { color: var(--red); background: #311a23; }
+    .dot { display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 11px currentColor; }
+    .meta { margin: 20px 0 28px; font-size: 12px; }
+    .alerts { display: grid; gap: 10px; margin-bottom: 28px; }
+    .alert { padding: 12px 15px; border-radius: 10px; border: 1px solid #6a3840; background: #301c25; color: #ffd1d6; }
+    .alert.drift { border-color: #75572d; background: #312719; color: #ffdda3; }
+    .alert.info { border-color: var(--line); background: var(--panel); color: var(--muted); }
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
+    .card, .panel { background: linear-gradient(145deg, var(--panel-hi), var(--panel)); border: 1px solid var(--line); border-radius: 17px; }
+    .card { padding: 20px; min-height: 172px; }
+    .card-title { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .card h3 { font-size: 16px; margin: 0; }
+    .card-number { font-size: 35px; line-height: 1; font-weight: 750; margin: 23px 0 6px; font-variant-numeric: tabular-nums; }
+    .badge { font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; }
+    .badge.good { color: var(--green); background: #10372e; }
+    .badge.bad { color: var(--red); background: #42232b; }
+    .badge.empty { color: var(--muted); background: #273542; }
+    .card-sub { color: var(--muted); font-size: 13px; }
+    .grid { display: grid; grid-template-columns: 1.18fr .82fr; gap: 16px; margin-top: 17px; }
+    .panel { padding: 22px; min-width: 0; }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 21px; }
+    .panel-head p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .tabs { display: flex; gap: 5px; flex-wrap: wrap; }
+    button { cursor: pointer; font: inherit; }
+    .tab { border: 1px solid var(--line); background: #10212d; color: var(--muted); padding: 6px 10px; border-radius: 8px; font-size: 12px; }
+    .tab[aria-pressed="true"] { background: #1d4a50; color: #e7fffa; border-color: #3a857b; }
+    .histogram { display: grid; gap: 12px; }
+    .bar-row { display: grid; grid-template-columns: 92px 1fr 28px; gap: 10px; align-items: center; font-size: 12px; }
+    .bar-track { height: 16px; background: #0a1925; border-radius: 5px; overflow: hidden; }
+    .bar { height: 100%; border-radius: 5px; background: var(--green); min-width: 0; transition: width .35s ease; }
+    .bar.corrupted { background: var(--amber); }
+    .bar.repaired { background: var(--blue); }
+    .count { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 11px 8px; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+    td:not(:first-child), th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .wide { margin-top: 17px; }
+    .expectation { display: grid; grid-template-columns: 1fr auto; gap: 12px; border-bottom: 1px solid var(--line); padding: 10px 0; font-size: 13px; }
+    .expectation:last-child { border: 0; }
+    .expectation strong { font-weight: 600; overflow-wrap: anywhere; }
+    .expectation span { color: var(--muted); }
+    .expectation .pass { color: var(--green); }
+    .expectation .fail { color: var(--red); }
+    .footnote { margin-top: 18px; font-size: 12px; }
+    @media (max-width: 760px) {
+      header { flex-direction: column; }
+      .cards, .grid { grid-template-columns: 1fr; }
+      .panel-head { flex-direction: column; }
+      .live { align-self: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <div class="eyebrow">Trike / Data Pipeline</div>
+        <h1>Data Observability</h1>
+        <p class="intro">Chất lượng dữ liệu, độ tươi và tác động lên RAG từ artifact của pipeline.</p>
+      </div>
+      <div class="live" id="connection"><span class="dot"></span>Đang kết nối</div>
+    </header>
+    <p class="meta" id="updated">Đang đọc dữ liệu…</p>
+    <section class="alerts" id="alerts" aria-live="polite"></section>
+    <section class="cards" id="stage-cards" aria-label="Trạng thái các giai đoạn"></section>
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-head">
+          <div><h2>Phân bố tuổi bài báo</h2><p>Đếm số bài theo age_days tại từng trạng thái.</p></div>
+          <div class="tabs" id="stage-tabs" aria-label="Chọn trạng thái"></div>
+        </div>
+        <div class="histogram" id="histogram"></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><div><h2>Hiệu năng RAG</h2><p>Cùng bộ test set cho ba trạng thái.</p></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Chỉ số</th><th>Baseline</th><th>Corrupted</th><th>Repaired</th></tr></thead>
+            <tbody id="metrics"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <section class="panel wide">
+      <div class="panel-head"><div><h2>Great Expectations</h2><p id="expectation-caption">Kiểm định theo trạng thái đã chọn.</p></div></div>
+      <div id="expectations"></div>
+    </section>
+    <p class="footnote">Trang đọc lại artifact mỗi 5 giây. Cảnh báo age drift là quy tắc: tỷ lệ bài trên 180 ngày tăng từ 10 điểm phần trăm so với baseline; đây không phải kiểm định thống kê. Dữ liệu chỉ được phục vụ trên 127.0.0.1.</p>
+  </main>
+  <script>
+    const names = {baseline: "Baseline", corrupted: "Corrupted", repaired: "Repaired"};
+    const order = ["baseline", "corrupted", "repaired"];
+    let selected = "baseline";
+    let current = null;
+
+    function node(tag, className, value) {
+      const item = document.createElement(tag);
+      if (className) item.className = className;
+      if (value !== undefined) item.textContent = value;
+      return item;
+    }
+    function percent(value) {
+      return typeof value === "number" ? (value * 100).toFixed(1) + "%" : "—";
+    }
+    function decimal(value) {
+      return typeof value === "number" ? value.toFixed(4) : "—";
+    }
+    function stamp(value) {
+      return value ? new Date(value).toLocaleString("vi-VN") : "Chưa có";
+    }
+    function badge(ok) {
+      if (ok === null || ok === undefined) return node("span", "badge empty", "Chưa có");
+      return node("span", "badge " + (ok ? "good" : "bad"), ok ? "Đạt" : "Cảnh báo");
+    }
+    function renderAlerts(data) {
+      const box = document.getElementById("alerts");
+      box.replaceChildren();
+      const items = data.alerts || [];
+      if (!items.length) box.append(node("div", "alert info", "Không có cảnh báo từ các artifact hiện tại."));
+      items.forEach(function (alert) {
+        box.append(node("div", "alert " + (alert.kind === "drift" ? "drift" : ""), alert.message));
+      });
+      (data.warnings || []).forEach(function (warning) {
+        box.append(node("div", "alert info", warning));
+      });
+    }
+    function renderCards(data) {
+      const box = document.getElementById("stage-cards");
+      box.replaceChildren();
+      order.forEach(function (key) {
+        const stage = data.stages[key];
+        const card = node("article", "card");
+        const top = node("div", "card-title");
+        top.append(node("h3", "", names[key]));
+        top.append(badge(stage.quality ? stage.quality.success : null));
+        card.append(top);
+        card.append(node("div", "card-number", stage.paper_count === null ? "—" : String(stage.paper_count)));
+        card.append(node("div", "card-sub", "bài báo · Freshness " + (
+          stage.freshness ? (stage.freshness.is_fresh ? "đạt" : "cảnh báo") : "chưa có"
+        )));
+        if (stage.freshness) {
+          card.append(node("div", "card-sub", "Quá 180 ngày: " +
+            stage.freshness.stale_rows + "/" + stage.freshness.total_rows +
+            " (" + percent(stage.freshness.stale_ratio) + ")"));
+        }
+        box.append(card);
+      });
+    }
+    function renderTabs() {
+      const tabs = document.getElementById("stage-tabs");
+      tabs.replaceChildren();
+      order.forEach(function (key) {
+        const button = node("button", "tab", names[key]);
+        button.type = "button";
+        button.setAttribute("aria-pressed", String(selected === key));
+        button.addEventListener("click", function () {
+          selected = key;
+          renderTabs();
+          renderDetail();
+        });
+        tabs.append(button);
+      });
+    }
+    function renderDetail() {
+      if (!current) return;
+      const stage = current.stages[selected];
+      const chart = document.getElementById("histogram");
+      chart.replaceChildren();
+      if (!stage.age_distribution) {
+        chart.append(node("p", "intro", "Chưa có dữ liệu tuổi bài báo."));
+      } else {
+        const values = Object.values(stage.age_distribution);
+        const maxCount = Math.max(1, ...values);
+        Object.entries(stage.age_distribution).forEach(function (entry) {
+          const line = node("div", "bar-row");
+          line.append(node("span", "", entry[0]));
+          const track = node("div", "bar-track");
+          const bar = node("div", "bar " + selected);
+          bar.style.width = (entry[1] / maxCount * 100) + "%";
+          track.append(bar);
+          line.append(track);
+          line.append(node("span", "count", String(entry[1])));
+          chart.append(line);
+        });
+      }
+      document.getElementById("expectation-caption").textContent =
+        names[selected] + " · từng expectation và cột kiểm tra.";
+      const checks = document.getElementById("expectations");
+      checks.replaceChildren();
+      const expectations = stage.quality ? stage.quality.expectations : [];
+      if (!expectations || !expectations.length) {
+        checks.append(node("p", "intro", "Chưa có báo cáo Great Expectations."));
+      } else {
+        expectations.forEach(function (item) {
+          const line = node("div", "expectation");
+          const label = node("div");
+          label.append(node("strong", "", item.type || "Expectation"));
+          label.append(node("span", "", item.column ? " · " + item.column : " · toàn bảng"));
+          line.append(label);
+          line.append(node("span", item.success ? "pass" : "fail", item.success ? "Đạt" : "Lỗi"));
+          checks.append(line);
+        });
+      }
+    }
+    function renderMetrics(data) {
+      const body = document.getElementById("metrics");
+      body.replaceChildren();
+      [
+        ["Hit Rate", "retrieval_hit_rate", percent],
+        ["Token F1", "mean_token_f1", decimal],
+        ["Judge accuracy", "judge_accuracy", percent],
+        ["Heuristic judge", "fallback_judge_count", function (x) { return x ?? "—"; }]
+      ].forEach(function (metric) {
+        const row = node("tr");
+        row.append(node("td", "", metric[0]));
+        order.forEach(function (key) {
+          const values = data.stages[key].metrics;
+          row.append(node("td", "", values ? String(metric[2](values[metric[1]])) : "—"));
+        });
+        body.append(row);
+      });
+    }
+    async function refresh() {
+      try {
+        const response = await fetch("/api/state", {cache: "no-store"});
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        current = await response.json();
+        document.getElementById("connection").className = "live";
+        document.getElementById("connection").innerHTML = '<span class="dot"></span>Đang đồng bộ';
+        document.getElementById("updated").textContent =
+          "Kiểm tra: " + stamp(current.checked_at) + " · Artifact mới nhất: " +
+          stamp(current.artifacts_updated_at) + " · Tự cập nhật mỗi 5 giây";
+        renderAlerts(current);
+        renderCards(current);
+        renderTabs();
+        renderDetail();
+        renderMetrics(current);
+      } catch (error) {
+        document.getElementById("connection").className = "live offline";
+        document.getElementById("connection").innerHTML = '<span class="dot"></span>Mất kết nối';
+        document.getElementById("updated").textContent =
+          "Không đọc được trạng thái: " + error.message;
+      }
+    }
+    refresh();
+    setInterval(refresh, 5000);
+  </script>
+</body>
+</html>

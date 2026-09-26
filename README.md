@@ -22,7 +22,17 @@
 
 - `data/raw/` — Snapshot offline Crossref API (`crossref_response.json`)
 - `src/` — Khung pipeline thu thập, embedding MiniLM, đánh giá metrics (có `TODO(student)`)
-- `script/` — Entrypoints: `run_phase1.py`, `run_corruption_flow.py`
+- `script/` — Entrypoints: `run_phase1.py`, `run_corruption_flow.py`, `run_dashboard.py`
+
+## Giao diện Data Observability
+
+Chạy từ thư mục gốc của repository:
+
+```bash
+python script/run_dashboard.py
+```
+
+Mở `http://127.0.0.1:8765`. Trang đọc lại artifact mỗi 5 giây, hiển thị Quality Gate, Freshness SLA, phân bố `age_days` và chỉ số RAG cho Baseline / Corrupted / Repaired. Cảnh báo age drift dùng quy tắc minh bạch: tỷ lệ bài trên 180 ngày tăng ít nhất 10 điểm phần trăm so với baseline. Chạy lại pipeline ở terminal khác để cập nhật artifact; dashboard sẽ tự hiển thị số liệu mới. Server chỉ lắng nghe trên máy cục bộ và không yêu cầu thêm dependency.
 
 ## Học viên cần làm gì?
 
