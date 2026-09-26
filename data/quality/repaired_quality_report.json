@@ -1,0 +1,102 @@
+{
+  "stage": "repaired",
+  "success": true,
+  "gx_success": true,
+  "is_fresh": true,
+  "row_count": 24,
+  "missing_columns": [],
+  "blank_columns": {},
+  "short_summary_rows": 0,
+  "expectations": [
+    {
+      "type": "ExpectTableRowCountToBeBetween",
+      "column": null,
+      "success": true,
+      "result": {
+        "observed_value": 24
+      }
+    },
+    {
+      "type": "ExpectColumnValuesToNotBeNull",
+      "column": "paper_id",
+      "success": true,
+      "result": {
+        "element_count": 24,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "ExpectColumnValuesToNotBeNull",
+      "column": "title",
+      "success": true,
+      "result": {
+        "element_count": 24,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "ExpectColumnValuesToNotBeNull",
+      "column": "text_for_embedding",
+      "success": true,
+      "result": {
+        "element_count": 24,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "ExpectColumnValuesToBeUnique",
+      "column": "paper_id",
+      "success": true,
+      "result": {
+        "element_count": 24,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "ExpectColumnValueLengthsToBeBetween",
+      "column": "summary",
+      "success": true,
+      "result": {
+        "element_count": 24,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    }
+  ],
+  "freshness": {
+    "threshold_days": 180,
+    "max_stale_ratio": 0.25,
+    "total_rows": 24,
+    "stale_rows": 0,
+    "missing_age_rows": 0,
+    "stale_ratio": 0.0,
+    "is_fresh": true
+  }
+}
